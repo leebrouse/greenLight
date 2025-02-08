@@ -9,3 +9,10 @@ movies:
 # run project:
 run:
 	go run ./cmd/api
+
+# sql migration:
+migration_up:
+	migrate -path=./migrations -database=$GREENLIGHT_DB_DSN up
+
+migration_down:
+	migrate -path=./migrations -database=$GREENLIGHT_DB_DSN down
