@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/leebrouse/greenLight/internal/data"
 	_ "github.com/lib/pq"
 )
 
@@ -29,6 +30,7 @@ type config struct {
 type application struct {
 	config config
 	logger *log.Logger
+	models  data.Models
 }
 
 func main() {
@@ -45,15 +47,17 @@ func main() {
 
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
-	app := &application{
-		config: cfg,
-		logger: logger,
-	}
-
 	db, err := openDB(cfg)
 	if err != nil {
 		logger.Fatal(err)
 	}
+
+	app := &application{
+		config: cfg,
+		logger: logger,
+		models:  data.NewModels(db),
+	}
+
 	defer db.Close()
 	logger.Printf("database connection pool established")
 
