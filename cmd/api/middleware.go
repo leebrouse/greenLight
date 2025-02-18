@@ -38,7 +38,7 @@ func (app *application) ratelimited(next http.Handler) http.Handler {
 		clients = make(map[string]*client)
 	)
 
-	// delete leisure limiter to protect the limited source
+	// delete leisure client to protect the limited resource
 	go func() {
 		for {
 			time.Sleep(time.Minute)
