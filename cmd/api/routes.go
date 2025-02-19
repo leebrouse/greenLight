@@ -19,5 +19,8 @@ func (app *application) router() http.Handler {
 	router.HandlerFunc(http.MethodPatch, "/v1/movies/:id", app.updateMovieHandler)
 	router.HandlerFunc(http.MethodDelete, "/v1/movies/:id", app.deletMovieHandler)
 
+	//add user register handler (method:POST)
+	router.HandlerFunc(http.MethodPost, "/v1/users", app.registerUserHandler)
+
 	return app.recoverPanic(app.ratelimited(router))
 }

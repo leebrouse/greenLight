@@ -11,8 +11,8 @@ run:
 	go run ./cmd/api
 
 # sql migration:
-migration_up:
+migrate_up:
 	migrate -path=./migrations -database=$GREENLIGHT_DB_DSN up
 
-migration_down:
+migrate_down:
 	migrate -path=./migrations -database=$GREENLIGHT_DB_DSN down

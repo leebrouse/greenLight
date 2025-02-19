@@ -24,7 +24,7 @@ func (app *application) serve() error {
 	// 创建一个 shutdownError 通道，用于接收 Shutdown() 返回的错误
 	shutdownError := make(chan error)
 
-	// 启动一个 goroutine 来等待停止信号并执行优雅关机
+	// 启动一个 goroutine 来等待停止信号并to implement graceful shutdown
 	go func() {
 		// 监听中断信号（SIGINT 或 SIGTERM）
 		quit := make(chan os.Signal, 1)
