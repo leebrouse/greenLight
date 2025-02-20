@@ -40,7 +40,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
-	
+
 	//call insert method in (./data/user)
 	if err := app.models.Users.Insert(user); err != nil {
 		switch {
@@ -53,8 +53,14 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	app.background(func() {
+		// Send the welcome email.
+		if err := app.mailer.Send(user.Email, "user_welcome.tmpl.html", user); err != nil {
+			app.logger.PrintError(err, nil)
+		}
+	})
 	//send response to the cline using json format ,if error ,sending error
-	err := app.writeJSON(w, http.StatusCreated, envelope{"user": user}, nil)
+	err := app.writeJSON(w, http.StatusAccepted, envelope{"user": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
