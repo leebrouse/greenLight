@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/leebrouse/greenLight/internal/data"
 	"github.com/leebrouse/greenLight/internal/validator"
@@ -53,15 +54,95 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	//new token
+	token, err := app.models.Tokens.New(user.ID, 3*24*time.Hour, data.ScopeActivation)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	// using the method to create a gorouting for sending an e-mail when user registers account successfully
 	app.background(func() {
+
+		//template data map
+		data := map[string]interface{}{
+			"activationToken": token.Plaintext,
+			"userID":          user.ID,
+		}
+
 		// Send the welcome email.
-		if err := app.mailer.Send(user.Email, "user_welcome.tmpl.html", user); err != nil {
+		err = app.mailer.Send(user.Email, "user_welcome.tmpl.html", data)
+		if err != nil {
 			app.logger.PrintError(err, nil)
 		}
 	})
+
 	//send response to the cline using json format ,if error ,sending error
-	err := app.writeJSON(w, http.StatusAccepted, envelope{"user": user}, nil)
+	err = app.writeJSON(w, http.StatusAccepted, envelope{"user": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+	}
+}
+
+func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Request) {
+	//the given token by the user
+	var input struct {
+		TokenPlaintext string `json:"token"`
+	}
+
+	//read the data from the input
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	//new validator to check the token
+	v := validator.New()
+	if data.ValidateTokenPlaintext(v, input.TokenPlaintext); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	//get user data by the give token
+	user, err := app.models.Users.GetForToken(data.ScopeActivation, input.TokenPlaintext)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			v.AddError("token", "invalid or expired activation token")
+			app.failedValidationResponse(w, r, v.Errors)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	//assign true to the user.Activated
+	user.Activated = true
+
+	//update the user
+	err = app.models.Users.Update(user)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrEditConflict):
+			app.editConflictResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	//delet the token that has been used
+	err = app.models.Tokens.DeleteAllForUser(data.ScopeActivation, user.ID)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	//write the json message
+	err = app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
 	}
 }
