@@ -24,5 +24,9 @@ func (app *application) router() http.Handler {
 
 	//add activate user handler (method:PUT)
 	router.HandlerFunc(http.MethodPut, "/v1/users/activated", app.activateUserHandler)
-	return app.recoverPanic(app.ratelimited(router))
+
+	//POST http://localhost:4000/v1/tokens/authentication
+	router.HandlerFunc(http.MethodPost, "/v1/tokens/authentication", app.createAuthenticationTokenHandler)
+
+	return app.recoverPanic(app.ratelimited(app.authenticate(router)))
 }

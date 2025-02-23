@@ -11,6 +11,19 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Declare a new AnonymousUser variable.
+var AnonymousUser = &User{}
+
+/*
+	data.AnonymousUser.IsAnonymous() // → Returns true
+	otherUser := &data.User{}
+	otherUser.IsAnonymous() // → Returns false
+*/
+// Check if a User instance is the AnonymousUser.
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
+}
+
 type User struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
@@ -128,7 +141,7 @@ func (m *UserModel) GetByEmail(email string) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRowContext(ctx, query).Scan(
+	err := m.DB.QueryRowContext(ctx, query, email).Scan(
 		&user.ID,
 		&user.CreatedAt,
 		&user.Name,
@@ -192,7 +205,7 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error)
 	//get the tokenHash using the tokenPlaintext
 	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
 
-	//sql 
+	//sql
 	query := `
 				SELECT users.id, users.created_at, users.name, users.email, users.password_hash, users.activated, users.version
 				FROM users
@@ -209,10 +222,10 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	//user 
+	//user
 	var user User
 
-	//find the suit user 
+	//find the suit user
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
 		&user.ID,
 		&user.CreatedAt,
