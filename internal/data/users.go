@@ -189,9 +189,10 @@ func (m *UserModel) Update(user *User) error {
 
 // A submethod for retrieving the user by the given token
 func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error) {
-
+	//get the tokenHash using the tokenPlaintext
 	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
 
+	//sql 
 	query := `
 				SELECT users.id, users.created_at, users.name, users.email, users.password_hash, users.activated, users.version
 				FROM users
@@ -201,13 +202,17 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error)
 				AND tokens.scope = $2
 				AND tokens.expiry > $3
 			`
+	//arguments in the sql query
 	args := []interface{}{tokenHash[:], tokenScope, time.Now()}
 
+	//create the context
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
+	//user 
 	var user User
 
+	//find the suit user 
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
 		&user.ID,
 		&user.CreatedAt,
