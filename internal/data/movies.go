@@ -90,7 +90,7 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 	defer cancel()
 
 	err := m.DB.QueryRowContext(ctx, query, id).Scan(
-		&[]byte{},
+		// &[]byte{},
 		&movie.ID,
 		&movie.CreatedAt,
 		&movie.Title,
@@ -117,10 +117,11 @@ func (m MovieModel) Update(movie *Movie) error {
 	// Declare the SQL query for updating the record and returning the new version
 	// number.
 	query := `
-	UPDATE movies
-	SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
-	WHERE id = $5 AND version= $6
-	RETURNING version`
+				UPDATE movies
+				SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
+				WHERE id = $5 AND version= $6
+				RETURNING version
+			`
 	// Create an args slice containing the values for the placeholder parameters.
 	args := []interface{}{
 		movie.Title,
