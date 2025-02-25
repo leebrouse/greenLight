@@ -35,5 +35,5 @@ func (app *application) router() http.Handler {
 	//POST http://localhost:4000/v1/tokens/authentication
 	router.HandlerFunc(http.MethodPost, "/v1/tokens/authentication", app.createAuthenticationTokenHandler)
 
-	return app.recoverPanic(app.ratelimited(app.authenticate(router)))
+	return app.recoverPanic(app.enableCORS(app.ratelimited(app.authenticate(router))))
 }

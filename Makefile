@@ -7,8 +7,11 @@ movies:
 	curl -X POST localhost:4000/v1/movies
 
 # run project:
-run:
+client:
 	go run ./cmd/api
+
+server:
+	go run ./cmd/examples/cors/simple
 
 # sql migration:
 migrate_up:
