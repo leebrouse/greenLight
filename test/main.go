@@ -1,46 +1,34 @@
 package main
 
 import (
-	"encoding/json"
-	"net/http"
+	"flag"
+	"log"
+	"net/url"
+	"strings"
 )
 
-func main() {}
+var (
+	urls []*url.URL
+)
 
-func healthcheckHandlerMarshalIndent(w http.ResponseWriter, r *http.Request) {
-	data := map[string]string{
-		"status":      "available",
-		"environment": "development",
-		"version":     "1.0.0",
+func main() {
+	flag.Func("urls", "List all of the urls in the string", func(s string) error {
+
+		for _, u := range strings.Fields(s) {
+			if url, err := url.Parse(u); err != nil {
+				return err
+			} else {
+				urls = append(urls, url)
+			}
+		}
+
+		return nil
+	})
+
+	flag.Parse()
+
+	for _, u := range urls {
+		log.Println(u)
 	}
 
-	js, err := json.MarshalIndent(data, "", "\t")
-	if err != nil {
-		http.Error(w, "The server encountered a problem and could not process your request", http.StatusInternalServerError)
-		return
-	}
-
-	js = append(js, '\n')
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(js)
-}
-
-func healthcheckHandlerMarshal(w http.ResponseWriter, r *http.Request) {
-	data := map[string]string{
-		"status":      "available",
-		"environment": "development",
-		"version":     "1.0.0",
-	}
-
-	js, err := json.Marshal(data)
-	if err != nil {
-		http.Error(w, "The server encountered a problem and could not process your request", http.StatusInternalServerError)
-		return
-	}
-
-	js = append(js, '\n')
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(js)
 }
